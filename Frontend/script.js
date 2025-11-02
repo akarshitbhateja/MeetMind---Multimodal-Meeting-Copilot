@@ -1,4 +1,4 @@
-const BACKEND_URL = 'https://meet-mind-multimodal-meeting-copilo.vercel.app';
+const BACKEND_URL = 'https://meet-mind-multimodal-meeting-copilo.vercel.app/api';
 
 document.addEventListener('DOMContentLoaded', () => {
     // =================================================================================
