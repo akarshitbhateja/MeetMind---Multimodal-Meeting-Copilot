@@ -1,0 +1,12 @@
+# Ignore the Python virtual environment
+backend/venv/
+
+# Ignore the secret environment file
+backend/.env
+
+# Ignore temporary audio files
+backend/temp_audio_files/
+
+# Ignore Python cache files
+__pycache__/
+*.pyc

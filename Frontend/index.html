@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeetMind - AI Meeting Copilot</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 MeetMind</h1>
+            <p>Your Complete AI-Powered Meeting Copilot</p>
+        </header>
+
+        <nav class="main-nav">
+            <button type="button" id="nav-pre-meeting" class="nav-button active">Pre-Meeting</button>
+            <button type="button" id="nav-post-meeting" class="nav-button">Post-Meeting</button>
+        </nav>
+
+        <section id="pre-meeting-section" class="main-section">
+            <h2>Calendar Reminder Setup</h2>
+            <p class="subtitle">Schedule a meeting reminder for all attendees via your connected calendar.</p>
+            <label for="reminder-title">Meeting Title</label>
+            <input type="text" id="reminder-title" placeholder="e.g., Q4 Project Kickoff">
+            <div class="time-inputs-container">
+                <div class="time-input-group">
+                    <label for="reminder-start-time">Start Time</label>
+                    <input type="datetime-local" id="reminder-start-time">
+                </div>
+                <div class="time-input-group">
+                    <label for="reminder-end-time">End Time</label>
+                    <input type="datetime-local" id="reminder-end-time">
+                </div>
+            </div>
+            <label for="reminder-message">Reminder Message / Description</label>
+            <textarea id="reminder-message" placeholder="e.g., Let's sync up on the Q4 goals. Please come prepared to discuss your team's roadmap."></textarea>
+            <label for="attendee-emails">Attendee Emails (comma-separated)</label>
+            <input type="text" id="attendee-emails" placeholder="e.g., user1@example.com, user2@example.com">
+            
+            <!-- THE FIX IS HERE: type="button" -->
+            <button type="button" id="schedule-btn">Complete Setup & Schedule</button>
+            
+            <div id="schedule-status-container" class="status-box hidden"></div>
+            <div id="meeting-link-container" class="hidden">
+                <label>Google Meet Link</label>
+                <div class="link-display">
+                    <input type="text" id="meeting-link-output" readonly>
+                    <button type="button" id="copy-link-btn">Copy</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="post-meeting-section" class="main-section hidden">
+            <h2>AI Summary & Action Items</h2>
+            <p class="subtitle">Upload a meeting audio file to get a full transcript, summary, and action items.</p>
+            <div class="upload-area"><input type="file" id="audio-file-input" accept="audio/*"><label for="audio-file-input" id="file-label">Choose an audio file...</label></div>
+            <div id="progress-container" class="hidden"><p id="status-text">Starting...</p><div class="progress-bar"><div class="progress-bar-inner" id="progress-bar-inner"></div></div></div>
+            
+            <!-- THE FIX IS HERE: type="button" -->
+            <button type="button" id="process-btn">Upload & Generate Summary</button>
+
+            <div id="results-container" class="hidden"><h2>Summary & Action Items</h2><div id="summary-output"></div><hr><h2>Full Transcript</h2><div id="transcript-output"></div></div>
+            <div id="history-section"><h2>Recent Meetings</h2><ul id="history-list"></ul></div>
+        </section>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

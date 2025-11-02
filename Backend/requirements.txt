@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+google-generativeai
+python-dotenv
+fastapi-cors
+openai-whisper
+python-multipart
+motor
+sse-starlette
+httpx
