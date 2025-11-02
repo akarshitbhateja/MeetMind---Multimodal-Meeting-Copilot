@@ -14,12 +14,13 @@ from pydantic import BaseModel
 from typing import List
 from bson import ObjectId
 
-# --- INITIAL SETUP & CONNECTIONS ---
+# --- INITIAL SETUP ---
 load_dotenv()
+# ... (rest of the setup is the same)
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 MONGO_CONNECTION_STRING = os.getenv("MONGO_CONNECTION_STRING")
 PABBLY_WEBHOOK_URL = os.getenv("PABBLY_WEBHOOK_URL")
-TEMP_DIR = "/tmp" # Vercel uses a /tmp directory for temporary files
+TEMP_DIR = "/tmp" 
 
 if not all([GOOGLE_API_KEY, MONGO_CONNECTION_STRING, PABBLY_WEBHOOK_URL]):
     raise ValueError("One or more environment variables are missing.")
@@ -30,35 +31,33 @@ db = client.meetmind_db
 post_meeting_collection = db.get_collection("post_meetings")
 pre_meeting_collection = db.get_collection("pre_meetings")
 
-whisper_model = whisper.load_model("tiny") # Using 'tiny' for speed on Vercel's free tier
+whisper_model = whisper.load_model("tiny")
 genai.configure(api_key=GOOGLE_API_KEY)
-gemini_model = genai.GenerativeModel('gemini-2.5-pro')
+gemini_model = genai.GenerativeModel('gemini-1.5-pro-latest')
 
 app = FastAPI()
-# Add CORS middleware to allow all origins for simplicity in deployment
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 # --- DATA MODELS ---
 class ReminderRequest(BaseModel): title: str; startTime: str; endTime: str; message: str; attendees: List[str]
 class LinkUpdateRequest(BaseModel): meetingId: str; hangoutLink: str
 
 # --- API ENDPOINTS ---
-@app.get("/api")
-def read_root(): return {"status": "MeetMind Backend is operational."}
 
+# *** THIS IS THE CRITICAL TEST ENDPOINT ***
+@app.get("/api/test")
+def test_endpoint():
+    """A simple endpoint to prove the backend routing is working."""
+    return {"status": "ok", "message": "If you can see this, the Vercel backend is alive!"}
+
+# ... (The rest of your endpoints are here, unchanged)
 @app.post("/api/schedule-reminder")
-async def schedule_reminder(request: ReminderRequest):
+async def schedule_reminder(request: ReminderRequest): # ...
     new_meeting = {"title": request.title, "startTime": request.startTime, "hangoutLink": None, "created_at": datetime.utcnow()}
     result = await pre_meeting_collection.insert_one(new_meeting)
     meeting_id = str(result.inserted_id)
     try:
-        payload = {"meeting_id": meeting_id, "meeting_title": request.title, "start_.time": request.startTime, "end_time": request.endTime, "meeting_message": request.message, "attendee_emails": ", ".join(request.attendees)}
+        payload = {"meeting_id": meeting_id, "meeting_title": request.title, "start_time": request.startTime, "end_time": request.endTime, "meeting_message": request.message, "attendee_emails": ", ".join(request.attendees)}
         async with httpx.AsyncClient() as client: webhook_response = await client.post(PABBLY_WEBHOOK_URL, json=payload, timeout=30.0)
         webhook_response.raise_for_status()
         return {"message": "Reminder request sent! Polling for meeting link...", "meetingId": meeting_id}
@@ -67,19 +66,19 @@ async def schedule_reminder(request: ReminderRequest):
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 @app.post("/api/update-meeting-link")
-async def update_meeting_link(request: LinkUpdateRequest):
+async def update_meeting_link(request: LinkUpdateRequest): # ...
     result = await pre_meeting_collection.update_one({"_id": ObjectId(request.meetingId)}, {"$set": {"hangoutLink": request.hangoutLink}})
     if result.modified_count == 1: return {"status": "success"}
     raise HTTPException(status_code=404, detail="Meeting ID not found.")
 
 @app.get("/api/get-meeting-link/{meeting_id}")
-async def get_meeting_link(meeting_id: str):
+async def get_meeting_link(meeting_id: str): # ...
     meeting = await pre_meeting_collection.find_one({"_id": ObjectId(meeting_id)})
     if meeting: return {"hangoutLink": meeting.get("hangoutLink")}
     raise HTTPException(status_code=404, detail="Meeting not found.")
 
 @app.post("/api/transcribe-and-summarize")
-async def transcribe_and_summarize(file: UploadFile = File(...)):
+async def transcribe_and_summarize(file: UploadFile = File(...)): # ...
     temp_file_path = os.path.join(TEMP_DIR, f"{uuid.uuid4()}_{file.filename}")
     try:
         with open(temp_file_path, "wb") as buffer: shutil.copyfileobj(file.file, buffer)
@@ -98,7 +97,7 @@ async def transcribe_and_summarize(file: UploadFile = File(...)):
         if os.path.exists(temp_file_path): os.remove(temp_file_path)
 
 @app.get("/api/meetings")
-async def get_all_meetings():
+async def get_all_meetings(): # ...
     meetings = []
     helper = lambda m: {"id": str(m["_id"]), "filename": m["filename"], "upload_timestamp": m["upload_timestamp"], "transcript": m["transcript"], "summary": m["summary"]}
     async for meeting in post_meeting_collection.find().sort("upload_timestamp", -1).limit(20):
